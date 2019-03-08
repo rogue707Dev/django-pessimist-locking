@@ -1,0 +1,4 @@
+for this to work you need install django-pessimist_locking by point pip install to it like:
+
+pip install /where/you/have/it/django-pessimist_locking
+

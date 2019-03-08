@@ -1,20 +1,13 @@
-################################################################
-#      _____  _____  __ __  _____  _____  _____  _____
-#     |__   ||  _  ||  |  ||  _  ||__   ||__   ||  _  | .DE
-#     |   __||     ||_   _||     ||   __||   __||     |
-#     |_____||__|__|  |_|  |__|__||_____||_____||__|__| GMBH
-#
-#     ZAYAZZA PROPRIETARY/CONFIDENTIAL.
-#     Copyright (c) 2019. All rights reserved.
-#
-################################################################
-
+DEBUG = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.sessions',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.sites',
+
+    'demo',
     'pessimist_locking',
 ]
 
@@ -32,8 +25,18 @@ DATABASES = {
 
 
 MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'pessimist_locking.middleware.SoftPessimisticLockReleaseMiddleware',
 ]
 
 
 SECRET_KEY = 'secret-key'
+
+
+ROOT_URLCONF = 'demo.urls'
