@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_lock_excluded_urls():
-    return ['/jsi18n/', '/media/', '/static/', '/stats/', '/favicon.ico', '/login/', ] + getattr(settings, 'LOCK_EXCLUDE_URLS', [])
+    return ['/jsi18n/', '/admin/jsi18n/', '/media/', '/static/', '/stats/', '/favicon.ico', '/login/', ] + getattr(settings, 'LOCK_EXCLUDE_URLS', [])
 
 
 class SoftPessimisticLockReleaseMiddleware:
@@ -71,10 +71,14 @@ class SoftPessimisticLockReleaseMiddleware:
             uid = session.get_decoded().get('_auth_user_id')
             url_conf = resolve(path_info)
 
-            # TODO: need to check that user has permission to change since view permission is also served at _change url
-            if url_conf.url_name is not None and not url_conf.url_name.endswith('_change'):
-                logger.debug("path: %s", path_info)
-                release_pessimistic_locks_of_user(client_ip, User.objects.get(pk=uid))
+            if url_conf.url_name is not None:
+                url_name = url_conf.url_name
+                url_splitted = url_name.split('_')
+                permission_str = "{}_change_{}".format(url_splitted[0], url_splitted[1])
+
+                if not url_name.endswith('_change') or not request.user.has_perm(permission_str):
+                    logger.debug("path: %s", path_info)
+                    release_pessimistic_locks_of_user(client_ip, User.objects.get(pk=uid))
 
         except:
             logger.warning("failed to resolve url: %s", path_info, exc_info=True)
