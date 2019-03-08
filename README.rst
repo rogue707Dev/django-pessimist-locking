@@ -14,12 +14,12 @@ Quick start
 2. add app to settings like:
 
 INSTALLED_APPS = (
-    # All your other apps here
+    …,
     'pessimist_locking',
 )
 
 MIDDLEWARE = [
-    # All your other apps here
+    …,
     'pessimist_locking.middleware.SoftPessimisticLockReleaseMiddleware',
 ]
 
@@ -32,4 +32,4 @@ NOTE
 -----------
 1. used for for django >= 2.1
 
-2. this app uses rawsql which is only done for postgresql
+2. this app uses raw sql which is only done for postgresql
