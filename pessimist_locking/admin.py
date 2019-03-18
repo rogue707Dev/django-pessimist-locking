@@ -61,7 +61,7 @@ class SoftPessimisticChangeLockModelAdmin(admin.ModelAdmin):
         url_name = request.resolver_match.url_name
         change_permission = "%s.%s%s" % (self.model._meta.app_label, 'change_', self.model._meta.model_name)
         if request.user.has_perm(change_permission):
-            logger.info("check locks as user has change_permission: %s", change_permission)
+            logger.debug("check locks as user has change_permission: %s", change_permission)
 
             if url_name is not None and url_name.endswith('_change') and not temp_nolock:
                 try:
