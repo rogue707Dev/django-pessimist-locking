@@ -51,6 +51,7 @@ class SoftPessimisticLockReleaseMiddleware:
         path_info = request.path_info
         logger.debug("lock_handling_request_listener / client_ip: %s / path_info: %s", client_ip, path_info)
 
+        # TODO: improve here: startswith is not always the best … think about havin '/' in excluded_urls?!
         if request.is_ajax() or any(path_info.startswith(x) for x in excluded_urls) or path_info.endswith('-upload/') or path_info.endswith('.pdf') or 'nolock' in request.GET.urlencode():
             logger.debug("url: %s is excluded from lock handling", path_info)
             return None
