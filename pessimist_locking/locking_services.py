@@ -12,10 +12,11 @@ from django.conf import settings
 from django.contrib.admin.options import get_content_type_for_model
 from django.db import connection
 from django.utils.translation import ugettext as _
+from django.utils import timezone
 from pessimist_locking.exceptions import SoftPessimisticLockException
 from pessimist_locking.models import SoftPessimisticChangeLock
 from pessimist_locking.utils import get_client_ip
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 
 
@@ -37,7 +38,7 @@ def cleanup_outdated_pessimistic_locks():
     """
     logger.debug("cleanup_outdated_pessimistic_locks")
 
-    time_threshold = datetime.now() - timedelta(minutes=get_lock_duration())
+    time_threshold = timezone.now() - timedelta(minutes=get_lock_duration())
 
     query = """delete from {}
       where (
@@ -68,7 +69,7 @@ def get_pessimistic_lock(content_type_id, object_id, timestamp=None):
     """
 
     if timestamp == None:
-        timestamp = datetime.now()
+        timestamp = timezone.now()
 
     logger.debug("get_pessimistic_lock  current_content_type_id: %s, current_object_id: %s", content_type_id, object_id)
 
@@ -135,7 +136,7 @@ def add_pessimistic_lock(request, user, model, timestamp=None):
     """
 
     if timestamp == None:
-        timestamp = datetime.now()
+        timestamp = timezone.now()
 
     logger.debug("add_pessimistic_lock / request: %s, user: %s, model: %s", request, user, model)
 
