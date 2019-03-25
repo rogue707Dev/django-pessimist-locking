@@ -56,7 +56,7 @@ class SoftPessimisticLockReleaseMiddleware:
             return None
 
         try:
-            logger.info("%s is lock handling", path_info)
+            logger.debug("%s is lock handling since not in exclude.list: %s", path_info, excluded_urls)
 
             cookie = request.COOKIES.get('sessionid')
             if cookie is None:
