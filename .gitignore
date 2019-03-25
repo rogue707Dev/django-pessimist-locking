@@ -5,6 +5,10 @@
 venv/
 media/
 
+build/
+dist/
+*.egg-info
+
 /static
 
 eb-env
