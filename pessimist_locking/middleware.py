@@ -75,9 +75,13 @@ class SoftPessimisticLockReleaseMiddleware:
             if url_conf.url_name is not None:
                 url_name = url_conf.url_name
                 url_splitted = url_name.split('_')
-                permission_str = "{}_change_{}".format(url_splitted[0], url_splitted[1])
 
-                if not url_name.endswith('_change') or not request.user.has_perm(permission_str):
+                has_permission = False
+                if len(url_splitted) >= 2:
+                    permission_str = "{}_change_{}".format(url_splitted[0], url_splitted[1])
+                    has_permission = request.user.has_perm(permission_str)
+
+                if not url_name.endswith('_change') or not has_permission:
                     logger.debug("path: %s", path_info)
                     release_pessimistic_locks_of_user(client_ip, User.objects.get(pk=uid))
 
