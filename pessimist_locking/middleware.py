@@ -9,7 +9,7 @@
 #
 ################################################################
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
 from django.urls import resolve
 from pessimist_locking.locking_services import release_pessimistic_locks_of_user
@@ -83,7 +83,7 @@ class SoftPessimisticLockReleaseMiddleware:
 
                 if not url_name.endswith('_change') or not has_permission:
                     logger.debug("path: %s", path_info)
-                    release_pessimistic_locks_of_user(client_ip, User.objects.get(pk=uid))
+                    release_pessimistic_locks_of_user(client_ip, get_user_model().objects.get(pk=uid))
 
         except:
             logger.warning("failed to resolve url: %s", path_info, exc_info=True)

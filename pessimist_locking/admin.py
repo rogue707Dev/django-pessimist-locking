@@ -9,7 +9,7 @@
 #
 ################################################################
 from django.contrib import admin
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.checks import messages
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -43,7 +43,7 @@ class SoftPessimisticChangeLockModelAdmin(admin.ModelAdmin):
                 _('[%(model)s id:%(obj)s] wird gerade von %(user)s auf %(ip)s bearbeitet.') % {
                     'model': opts.verbose_name,
                     'obj': object_id,
-                    'user': User.objects.get(id=e.lock.user_id),
+                    'user': get_user_model().objects.get(id=e.lock.user_id),
                     'ip': e.lock.user_ip_address
                 },
                 messages.ERROR
