@@ -13,6 +13,10 @@ dist/
 
 eb-env
 
+.coverage
+xunit-reports/
+coverage-reports/
+
 *.iml
 *.model
 *.sqlite3
