@@ -9,16 +9,18 @@
 #
 ################################################################
 from django.db import transaction, IntegrityError
+from django.utils import timezone
 from pessimist_locking.locking_services import get_lock_duration, cleanup_outdated_pessimistic_locks, \
     get_pessimistic_lock
 from pessimist_locking.models import SoftPessimisticChangeLock
-from datetime import datetime, timedelta
+from datetime import timedelta
 import pytest
 
 
+@pytest.mark.skip(reason='dropped db constraints since unsupported in mysql')
 @pytest.mark.django_db
 def test_model_updatedat_constraints():
-    current_time = datetime.now()
+    current_time = timezone.now()
 
     try:
         with transaction.atomic():
@@ -40,73 +42,11 @@ def test_model_updatedat_constraints():
 
 
 @pytest.mark.django_db
-def test_model_null_constraints():
-    """
-    NOTE: since we don't know a way to get validations-errors from model at time of
-    writing of this the simple workaround is to test attributes after their order in the model
-    and check against the exception message
-    """
-
-    try:
-
-        # note that line is needed as one gets a: "TransactionManagementError: An error occurred in the current
-        # transaction. You can't execute queries until the end of the 'atomic' block." on the next try
-        with transaction.atomic():
-            lock = SoftPessimisticChangeLock()
-            lock.save()
-        pytest.fail("expected IntegrityError for user_id")
-
-    except IntegrityError as e:
-        assert "user_id" in e.__str__()
-        assert "not-null" in e.__str__().lower()
-
-    try:
-        with transaction.atomic():
-            lock = SoftPessimisticChangeLock(user_id=1)
-            lock.save()
-        pytest.fail("expected IntegrityError for content_type_id")
-
-    except IntegrityError as e:
-        # assert "content_type_id" in e.__str__()
-        # assert "not-null" in e.__str__().lower()
-        pass
-
-    try:
-        with transaction.atomic():
-            lock = SoftPessimisticChangeLock(user_id=1, content_type_id=1)
-            lock.save()
-        pytest.fail("expected IntegrityError for object_id")
-
-    except IntegrityError as e:
-        # assert "object_id" in e.__str__()
-        # assert "not-null" in e.__str__().lower()
-        pass
-
-    try:
-        with transaction.atomic():
-            lock = SoftPessimisticChangeLock(user_id=1, content_type_id=1, object_id=1)
-            lock.save()
-        pytest.fail("expected IntegrityError for user_ip_address")
-
-    except IntegrityError as e:
-        # name of custom constraint
-        assert "locking_ip_check" in e.__str__()
-
-    # so, now everything is fine
-    lock = SoftPessimisticChangeLock(user_id=1, content_type_id=1, object_id=1, user_ip_address="127.0.0.1")
-    lock.save()
-    assert lock.id is not None
-
-    # also have a look how many instances have been created
-    assert SoftPessimisticChangeLock.objects.count() == 1
-
-
-@pytest.mark.django_db
 def test_cleanup_created_at():
     # first ensure correct setting here
     assert get_lock_duration() == 5
 
-    current_time = datetime.now()
+    current_time = timezone.now()
     ts = current_time - timedelta(minutes=1)
 
     # create a lock and see if given created_at is used
@@ -157,6 +97,7 @@ def test_cleanup_created_at():
     )
     createdat_tobe_not_deleted_1.save()
     assert createdat_tobe_not_deleted_1.id is not None
+    assert SoftPessimisticChangeLock.objects.get(id=createdat_tobe_not_deleted_1.id).updated_at is None
 
     # check amount
     assert SoftPessimisticChangeLock.objects.count() == 4
@@ -175,7 +116,7 @@ def test_cleanup_updated_at():
     # first ensure correct setting here
     assert get_lock_duration() == 5
 
-    current_time = datetime.now()
+    current_time = timezone.now()
 
     # now verify updated at fields
     updatedat_tobe_not_deleted = SoftPessimisticChangeLock(
@@ -230,7 +171,7 @@ def test_getter_cleanup_call():
     assert len(result) == 0
 
     # create timestamp
-    current_time = datetime.now()
+    current_time = timezone.now()
 
     # create an outdated lock
     outdated_lock = SoftPessimisticChangeLock.objects.create(
@@ -259,7 +200,7 @@ def test_getter_cleanup_call_ts_default():
     assert len(result) == 0
 
     # create timestamp
-    current_time = datetime.now()
+    current_time = timezone.now()
 
     # create an outdated lock
     outdated_lock = SoftPessimisticChangeLock.objects.create(
@@ -287,7 +228,7 @@ def test_getter_singleresult():
     assert len(result) == 0
 
     # create timestamp
-    current_time = datetime.now()
+    current_time = timezone.now()
 
     # now lets create 2 valid locks - that could only be possible as manual db-insert or programming error
     lock1 = SoftPessimisticChangeLock.objects.create(
@@ -328,7 +269,7 @@ def test_getter_createdat():
     assert SoftPessimisticChangeLock.objects.count() == 0
 
     # create timestamp
-    current_time = datetime.now()
+    current_time = timezone.now()
 
     lock1 = SoftPessimisticChangeLock.objects.create(
         user_id=1,
@@ -371,7 +312,7 @@ def test_getter_updatedat():
     assert SoftPessimisticChangeLock.objects.count() == 0
 
     # create timestamp
-    current_time = datetime.now()
+    current_time = timezone.now()
 
     lock1 = SoftPessimisticChangeLock.objects.create(
         user_id=1,

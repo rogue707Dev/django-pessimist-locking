@@ -10,7 +10,7 @@
 ################################################################
 from django.conf import settings
 from django.contrib.admin.options import get_content_type_for_model
-from django.db import connection
+from django.db.models import Q
 from django.utils.translation import ugettext as _
 from django.utils import timezone
 from pessimist_locking.exceptions import SoftPessimisticLockException
@@ -40,17 +40,11 @@ def cleanup_outdated_pessimistic_locks():
 
     time_threshold = timezone.now() - timedelta(minutes=get_lock_duration())
 
-    query = """delete from {}
-      where (
-        created_at < %s
-        and updated_at is NULL
-      ) or (
-        updated_at is not NULL
-        and updated_at < %s
-      )
-    """.format(SoftPessimisticChangeLock._meta.db_table)
+    return SoftPessimisticChangeLock.objects.filter(
+        Q(created_at__lt=time_threshold, updated_at__isnull=True) |
+        Q(updated_at__isnull=False, updated_at__lt=time_threshold)
 
-    return connection.cursor().execute(query, [time_threshold, time_threshold])
+    ).delete()
 
 
 def get_pessimistic_lock(content_type_id, object_id, timestamp=None):
@@ -78,31 +72,15 @@ def get_pessimistic_lock(content_type_id, object_id, timestamp=None):
 
     time_threshold = timestamp - timedelta(minutes=get_lock_duration())
 
-    query = """select *
-      from {}
-      where content_type_id = %s
-      and object_id = %s
-      and((
-          created_at > %s
-          and updated_at is NULL
-        ) or (
-          updated_at is not NULL
-          and updated_at > %s
-        )
-      )""".format(SoftPessimisticChangeLock._meta.db_table)
+    lock_objects = SoftPessimisticChangeLock.objects.filter(content_type_id=content_type_id, object_id=object_id).filter(
+        Q(updated_at__isnull=True, created_at__gt=time_threshold) |
+        Q(updated_at__isnull=False, updated_at__gt=time_threshold)
+    )
 
-    query_result = SoftPessimisticChangeLock.objects.raw(query, [
-        content_type_id,
-        object_id,
-        time_threshold,
-        time_threshold
-    ])
-
-    lock_objects = list(query_result)
-    if len(lock_objects) == 0:
+    if lock_objects.count() == 0:
         return None
 
-    return lock_objects[0]
+    return lock_objects.first()
 
 
 def get_pessimistic_lock_for_model(model, timestamp=None):
@@ -186,9 +164,7 @@ def release_pessimistic_locks_of_user(ip_address, user):
 
     current_user_id = user.pk
 
-    query = """delete from {}
-      where user_id = %s
-      and user_ip_address = %s
-    """.format(SoftPessimisticChangeLock._meta.db_table)
-
-    return connection.cursor().execute(query, [current_user_id, ip_address])
+    return SoftPessimisticChangeLock.objects.filter(
+        user_id=current_user_id,
+        user_ip_address__iexact=ip_address
+    ).delete()
