@@ -11,7 +11,7 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from datetime import datetime
+from django.utils import timezone
 
 
 class SoftPessimisticChangeLock(models.Model):
@@ -41,13 +41,38 @@ class SoftPessimisticChangeLock(models.Model):
 
     updated_at = models.DateTimeField(null=True, blank=True, editable=False)
 
-    def save(self, *args, **kwargs):
+    # NOTE: MySQL 8.0.16 is the first version that supports CHECK constraints.
+    # so this will not work for mysql … we need something else there are many legacy systems (with very old mysql)
+    # to be supported.
+    #
+    # class Meta:
+    #     constraints = [
+    #         models.CheckConstraint(
+    #             check=(
+    #                 ~models.Q(
+    #                     user_ip_address__exact='',
+    #                     user_ip_address__isnull=True,
+    #                 )
+    #             ),
+    #             name='locking_ip_check'
+    #         ),
+    #         models.CheckConstraint(
+    #             check=(
+    #                 models.Q(updated_at__isnull=True) |
+    #                 models.Q(updated_at__gt=F('created_at'))
+    #             ),
+    #             name='locking_updated_check'
+    #         )
+    #     ]
 
+    def save(self, *args, **kwargs):
         # but that didn't work - MIND: blank seems only be used for validation
-        if self.created_at == None:
-            self.created_at = datetime.now()
+        if self.created_at is None:
+            self.created_at = timezone.now()
 
         super(SoftPessimisticChangeLock, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "{}: user_id: {} user_ip_address: {} content_object: {}".format(self.id, self.user_id, self.user_ip_address, self.content_object)
+        return "{}: user_id: {} user_ip_address: {} content_object: {}".format(
+            self.id, self.user_id, self.user_ip_address, self.content_object
+        )
