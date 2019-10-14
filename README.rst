@@ -30,6 +30,10 @@ MIDDLEWARE = [
 
 NOTE
 -----------
-1. used for for django >= 2.1
+to be used for django >= 2.1
 
-2. this app uses raw sql which is only done for postgresql
+
+UPGRADING
+-----------
+form versions <1.4 please drop the locking table before upgrading. then install the package and run
+ `python manage.py migrate` again.
