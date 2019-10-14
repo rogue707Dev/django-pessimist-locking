@@ -8,6 +8,7 @@
 #     Copyright (c) 2019. All rights reserved.
 #
 ################################################################
+import dj_database_url
 import os
 
 
@@ -23,20 +24,18 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.messages',
+    'django.contrib.staticfiles',
     'pessimist_locking',
     'sonar',
 ]
 
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'pessimist',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.parse(
+
+        # NOTE: have a look into tox.ini to see examples
+        os.environ.get('DATABASE_URL')
+    ),
 }
 
 
@@ -50,10 +49,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'pessimist_locking.middleware.SoftPessimisticLockReleaseMiddleware',
 ]
-
-
-SECRET_KEY = 'secret-key'
-
 
 TEMPLATES = [
     {
@@ -70,3 +65,5 @@ TEMPLATES = [
         },
     },
 ]
+
+SECRET_KEY = 'secret-key'
