@@ -1,8 +1,9 @@
-Django>=2.1.7
+Django>=2.2
 psycopg2-binary>=2.7.7
-tox>=3.7.0
-
+mysqlclient>=1.4.4
 pytest>=4.4.1
+pytest-django>=3.5.1
 pytest-cov>=2.7.1
 coverage>=4.5.3
 git+https://bitbucket.org/uxbus/django_sonar.git@master
+tox>=3.7.0
